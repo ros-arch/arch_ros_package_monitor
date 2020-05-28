@@ -25,6 +25,7 @@
 # (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
 # SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
+import argparse
 import sys
 
 import catkin_pkg
@@ -33,18 +34,20 @@ import helpers.aur as aur
 from helpers.rosdistro_adapter import RosdistroAdapter
 
 def main():
-    # pkg_name = sys.argv[1]
+    parser = argparse.ArgumentParser(description='A small package to get an overview of Archlinux ROS packages')
+    parser.add_argument('--distro_name', type=str, help='The ROS distribution that should be used',
+            default='noetic')
 
-    distro_name = "melodic"
+    args = parser.parse_args()
 
-    rosdistro = RosdistroAdapter(distro_name)
+    rosdistro = RosdistroAdapter(args.distro_name)
     package_distribution_list = rosdistro.get_package_list()
 
     for pkg_name in package_distribution_list:
         print("---\nChecking %s" % pkg_name)
         try:
             pkg_info = rosdistro.get_package_by_name(pkg_name)
-            aur_pkg_name = "ros-%s-%s" % (distro_name, pkg_name.replace('_', '-'))
+            aur_pkg_name = "ros-%s-%s" % (args.distro_name, pkg_name.replace('_', '-'))
             aur_pkg = aur.get_package_info(aur_pkg_name)
 
             print("  Upstream version: %s" % pkg_info.version)
