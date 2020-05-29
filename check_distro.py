@@ -32,34 +32,69 @@ import catkin_pkg
 
 import helpers.aur as aur
 from helpers.rosdistro_adapter import RosdistroAdapter
+from helpers.package import Package
+
 
 def main():
-    parser = argparse.ArgumentParser(description='A small package to get an overview of Archlinux ROS packages')
+    parser = argparse.ArgumentParser(
+        description='A small package to get an overview of Archlinux ROS packages')
     parser.add_argument('--distro_name', type=str, help='The ROS distribution that should be used',
-            default='noetic')
+                        default='noetic')
+    parser.add_argument('--hide_outdated', dest='show_outdated', action='store_false',
+                        help='Hide packages that are outdated in AUR')
+    # parser.add_argument('--show_missing', type=bool, help='Show packages that are missing in AUR',
+    # default=True)
+    parser.set_defaults(show_outdated=True)
 
     args = parser.parse_args()
+
+    print('Checking distro "%s"". this might take a while...' % args.distro_name)
 
     rosdistro = RosdistroAdapter(args.distro_name)
     package_distribution_list = rosdistro.get_package_list()
 
+    outdated_pkgs = list()
+    missing_pkgs = list()
+    error_pkgs = list()
+
     for pkg_name in package_distribution_list:
-        print("---\nChecking %s" % pkg_name)
+        # if pkg_name == 'capabilities':
+        # # DEBUG stop
+        # break
+        # print("---\nChecking %s" % pkg_name)
+        pkg = Package(pkg_name)
         try:
             pkg_info = rosdistro.get_package_by_name(pkg_name)
+            pkg.add_rosdistro_information(pkg_info)
             aur_pkg_name = "ros-%s-%s" % (args.distro_name, pkg_name.replace('_', '-'))
             aur_pkg = aur.get_package_info(aur_pkg_name)
 
-            print("  Upstream version: %s" % pkg_info.version)
-            aur_version = "None"
-            if aur_pkg['results']:
-                aur_version = aur_pkg['results']['Version']
-            print("  AUR version:      %s" % aur_version)
-        except TypeError as e:
-            print("Parsing error: %s" % e)
-        except catkin_pkg.package.InvalidPackage as err:
-            print("Invalid package: %s" % err)
+            # print('Upstream version: %s' % pkg_info.version)
 
+            if aur_pkg['results']:
+                if not isinstance(aur_pkg['results'], list):
+                    pkg.add_aur_information(aur_pkg['results'])
+                    # print('AUR version: %s' % aur_pkg['results']['Version'])
+                else:
+                    # throw here? This should not happen
+                    print('Error while processing package %s. Found multiple AUR packages' % pkg_name)
+
+            if pkg.get_status() == 'outdated':
+                outdated_pkgs.append(pkg)
+            elif pkg.get_status() == 'missing':
+                missing_pkgs.append(pkg)
+
+        except TypeError as err:
+            error_pkgs.append(pkg)
+            print("Parsing error: %s\n%s" % (pkg_name, err))
+        except catkin_pkg.package.InvalidPackage as err:
+            error_pkgs.append(pkg)
+            print("Invalid package: %s\n%s" % (pkg_name, err))
+
+    if args.show_outdated:
+        print("\nOutdated packages:")
+        for pkg in outdated_pkgs:
+            print(pkg)
 
 
 if __name__ == "__main__":
