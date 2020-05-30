@@ -25,16 +25,33 @@
 
 
 import json
+import sys
 import urllib
-AUR_API_URL = "http://aur.archlinux.org/rpc.php"
 
 
-def search_packages(args):
-    params = urllib.parse.urlencode({'type':'search', 'arg':args})
-    response = urllib.request.urlopen("%s?%s" % (AUR_API_URL,params)).read()
-    return json.loads(response)
+class AURAdapter():
+    """Wrapper for AURWeb rpc"""
 
-def get_package_info(args):
-    params = urllib.parse.urlencode({'type':'info', 'arg':args})
-    response = urllib.request.urlopen("%s?%s" % (AUR_API_URL,params)).read()
-    return json.loads(response)
+    aur_api_url = "http://aur.archlinux.org/rpc.php"
+
+    def __init__(self, distro_name):
+        self.distro_name = distro_name
+        self.packages = self._get_packages()
+
+
+    def _get_packages(self):
+        package_name = "ros-%s-" % self.distro_name
+        params = urllib.parse.urlencode({'type': 'search', 'arg': package_name})
+        response = urllib.request.urlopen("%s?%s" % (self.aur_api_url, params)).read()
+        parsed_response = json.loads(response)
+        if parsed_response['resultcount'] > 0:
+            return parsed_response['results']
+        # TODO throw
+        print("Could not find any package matching %s" % package_name, file=sys.stderr)
+        return list()
+
+    def get_package_info(self, pkg_name):
+        for pkg in self.packages:
+            if pkg['Name'] == pkg_name:
+                return pkg
+        return None

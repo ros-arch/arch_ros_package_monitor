@@ -30,7 +30,7 @@ import sys
 
 import catkin_pkg
 
-import helpers.aur as aur
+from helpers.aur import AURAdapter
 from helpers.rosdistro_adapter import RosdistroAdapter
 from helpers.package import Package
 
@@ -56,6 +56,8 @@ def main():
     rosdistro = RosdistroAdapter(args.distro_name)
     package_distribution_list = rosdistro.get_package_list()
 
+    aur_adapter = AURAdapter(args.distro_name)
+
     outdated_pkgs = list()
     missing_pkgs = list()
     error_pkgs = list()
@@ -70,18 +72,13 @@ def main():
             pkg_info = rosdistro.get_package_by_name(pkg_name)
             pkg.add_rosdistro_information(pkg_info)
             aur_pkg_name = "ros-%s-%s" % (args.distro_name, pkg_name.replace('_', '-'))
-            aur_pkg = aur.get_package_info(aur_pkg_name)
+            aur_pkg = aur_adapter.get_package_info(aur_pkg_name)
 
             # print('Upstream version: %s' % pkg_info.version)
 
-            if aur_pkg['results']:
-                if not isinstance(aur_pkg['results'], list):
-                    pkg.add_aur_information(aur_pkg['results'])
-                    # print('AUR version: %s' % aur_pkg['results']['Version'])
-                else:
-                    # throw here? This should not happen
-                    print('Error while processing package %s. Found multiple AUR packages' %
-                          pkg_name, file=sys.stderr)
+            if aur_pkg:
+                pkg.add_aur_information(aur_pkg)
+                # print('AUR version: %s' % aur_pkg['Version'])
 
             if pkg.get_status() == 'outdated':
                 outdated_pkgs.append(pkg)
