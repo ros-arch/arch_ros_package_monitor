@@ -48,7 +48,7 @@ def main():
 
     args = parser.parse_args()
 
-    print('Checking distro "%s"". this might take a while...' % args.distro_name)
+    print('Checking distro "%s". this might take a while...' % args.distro_name)
 
     rosdistro = RosdistroAdapter(args.distro_name)
     package_distribution_list = rosdistro.get_package_list()
