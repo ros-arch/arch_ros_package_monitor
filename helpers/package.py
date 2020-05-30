@@ -24,6 +24,7 @@
 # SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 import re
+import subprocess
 import sys
 
 
@@ -61,31 +62,56 @@ class Package():
     rosdistro"""
 
     def __init__(self, pkg_name):
-        super(Package, self).__init__()
         self.package_name = pkg_name
 
-        self.rosdistro_version = None
-        self.aur_version = None
+        self._rosdistro_version = None
+        self._aur_version = None
+        self._installed = False
 
     def add_aur_information(self, aur_pkg):
-        self.aur_version = Version(aur_pkg['Version'])
+        """Add information received from AUR to this package. This has to be a valid dictionary
+        build from the AURweb json response."""
+        self._aur_version = Version(aur_pkg['Version'])
+        self.update_installed_status(aur_pkg['Name'])
 
     def add_rosdistro_information(self, pkg_info):
-        self.rosdistro_version = Version(pkg_info.version)
+        """Add information from a parsed package manifest"""
+        self._rosdistro_version = Version(pkg_info.version)
 
     def get_status(self):
-        if self.aur_version:
-            if self.rosdistro_version != self.aur_version:
+        """
+        Get up-to-date status. Either returns
+            * 'outdated' when the rosdistro version is different from the AUR version
+            * 'uptodate' when rosdistro version and AUR version match
+            * 'missing' when no corresponding AUR package could be found
+            * 'error' if neither aur_version nor rosdistro_version are set for this package
+        """
+        if self._aur_version:
+            if self._rosdistro_version != self._aur_version:
                 return 'outdated'
             return 'uptodate'
-        elif self.rosdistro_version:
+        elif self._rosdistro_version:
             return 'missing'
 
         # TODO throw
         return 'error'
 
+    def is_installed(self):
+        return self._installed
+
+    def update_installed_status(self, pkg_name):
+        """Checks whether the package is installed locally"""
+        cmd = ["pacman", "--noconfirm", "-Q", pkg_name]
+        process = subprocess.Popen(cmd, stderr=subprocess.PIPE, stdout=subprocess.PIPE)
+        process.communicate()
+
+        if process.returncode == 0:
+            self._installed = True
+
+
     def __str__(self):
         output = '%s:\n - rosdistro: %s\n - AUR:       %s' % (self.package_name,
-                                                              self.rosdistro_version,
-                                                              self.aur_version)
+                                                              self._rosdistro_version,
+                                                              self._aur_version)
+        output +='\nInstalled: %s' % self._installed
         return output

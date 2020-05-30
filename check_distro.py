@@ -42,9 +42,12 @@ def main():
                         default='noetic')
     parser.add_argument('--hide_outdated', dest='show_outdated', action='store_false',
                         help='Hide packages that are outdated in AUR')
+    parser.add_argument('--show_installed_only', dest='show_installed', action='store_true',
+                        help='Show only outdated packages that are installed.')
     # parser.add_argument('--show_missing', type=bool, help='Show packages that are missing in AUR',
     # default=True)
     parser.set_defaults(show_outdated=True)
+    parser.set_defaults(show_installed=False)
 
     args = parser.parse_args()
 
@@ -95,6 +98,9 @@ def main():
     if args.show_outdated:
         print("\nOutdated packages:")
         for pkg in outdated_pkgs:
+            if args.show_installed and not pkg.is_installed():
+                # skip this package
+                continue
             print(pkg)
 
 
