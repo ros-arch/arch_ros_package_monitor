@@ -24,6 +24,7 @@
 # SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 import re
+import sys
 
 
 class Version():
@@ -44,7 +45,7 @@ class Version():
             self.bugfix = int(match.group('bugfix'))
         else:
             # TODO: Throw
-            print('Could not parse version')
+            print('Could not parse version %s' % (version_string), file=sys.stderr)
 
     def __eq__(self, other):
         return self.major == other.major \

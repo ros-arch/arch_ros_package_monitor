@@ -77,7 +77,8 @@ def main():
                     # print('AUR version: %s' % aur_pkg['results']['Version'])
                 else:
                     # throw here? This should not happen
-                    print('Error while processing package %s. Found multiple AUR packages' % pkg_name)
+                    print('Error while processing package %s. Found multiple AUR packages' %
+                          pkg_name, file=sys.stderr)
 
             if pkg.get_status() == 'outdated':
                 outdated_pkgs.append(pkg)
@@ -86,10 +87,10 @@ def main():
 
         except TypeError as err:
             error_pkgs.append(pkg)
-            print("Parsing error: %s\n%s" % (pkg_name, err))
+            print("Parsing error: %s\n%s" % (pkg_name, err), file=sys.stderr)
         except catkin_pkg.package.InvalidPackage as err:
             error_pkgs.append(pkg)
-            print("Invalid package: %s\n%s" % (pkg_name, err))
+            print("Invalid package: %s\n%s" % (pkg_name, err), file=sys.stderr)
 
     if args.show_outdated:
         print("\nOutdated packages:")
