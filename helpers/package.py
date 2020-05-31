@@ -66,6 +66,7 @@ class Package():
 
         self._rosdistro_version = None
         self._aur_version = None
+        self._gh_version = None
         self._installed = False
 
     def add_aur_information(self, aur_pkg):
@@ -78,16 +79,26 @@ class Package():
         """Add information from a parsed package manifest"""
         self._rosdistro_version = Version(pkg_info.version)
 
+    def add_gh_information(self, pkg_info):
+        """Add information from a parsed PKGBUILD from the GH repository"""
+        self._gh_version = Version(pkg_info['version'])
+
     def get_status(self):
         """
         Get up-to-date status. Either returns
             * 'outdated' when the rosdistro version is different from the AUR version
+            * 'outofsync' when the rosdistro version is different from the AUR version and the GH
+            version is also different from AUR version
             * 'uptodate' when rosdistro version and AUR version match
             * 'missing' when no corresponding AUR package could be found
             * 'error' if neither aur_version nor rosdistro_version are set for this package
         """
+        # TODO: This might not be the best categorization
         if self._aur_version:
             if self._rosdistro_version != self._aur_version:
+                if self._gh_version:
+                    if self._aur_version != self._gh_version:
+                        return 'outofsync'
                 return 'outdated'
             return 'uptodate'
         elif self._rosdistro_version:
@@ -110,8 +121,11 @@ class Package():
 
 
     def __str__(self):
-        output = '%s:\n - rosdistro: %s\n - AUR:       %s' % (self.package_name,
-                                                              self._rosdistro_version,
-                                                              self._aur_version)
-        output +='\nInstalled: %s' % self._installed
+        output = '%s:' % self.package_name
+        output += '\n - rosdistro: %s' % self._rosdistro_version
+        if self._aur_version:
+            output += '\n - AUR:       %s' % self._aur_version
+        if self._gh_version:
+            output += '\n - Github:    %s' % self._gh_version
+        output += '\nInstalled: %s' % self._installed
         return output

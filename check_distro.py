@@ -31,6 +31,7 @@ import sys
 import catkin_pkg
 
 from helpers.aur import AURAdapter
+from helpers.github import GHAdapter
 from helpers.rosdistro_adapter import RosdistroAdapter
 from helpers.package import Package
 
@@ -42,11 +43,14 @@ def main():
                         default='noetic')
     parser.add_argument('--hide_outdated', dest='show_outdated', action='store_false',
                         help='Hide packages that are outdated in AUR')
+    parser.add_argument('--hide_outofsync', dest='show_outofsync', action='store_false',
+                        help="Hide packages where the github version doesn't match the AUR version")
     parser.add_argument('--show_installed_only', dest='show_installed', action='store_true',
                         help='Show only outdated packages that are installed.')
     # parser.add_argument('--show_missing', type=bool, help='Show packages that are missing in AUR',
     # default=True)
     parser.set_defaults(show_outdated=True)
+    parser.set_defaults(show_outofsync=True)
     parser.set_defaults(show_installed=False)
 
     args = parser.parse_args()
@@ -57,8 +61,10 @@ def main():
     package_distribution_list = rosdistro.get_package_list()
 
     aur_adapter = AURAdapter(args.distro_name)
+    gh_adapter = GHAdapter(args.distro_name)
 
     outdated_pkgs = list()
+    outofsync_pkgs = list()
     missing_pkgs = list()
     error_pkgs = list()
 
@@ -80,8 +86,14 @@ def main():
                 pkg.add_aur_information(aur_pkg)
                 # print('AUR version: %s' % aur_pkg['Version'])
 
+            gh_pkg = gh_adapter.get_package_info(aur_pkg_name)
+            if gh_pkg:
+                pkg.add_gh_information(gh_pkg)
+
             if pkg.get_status() == 'outdated':
                 outdated_pkgs.append(pkg)
+            if pkg.get_status() == 'outofsync':
+                outofsync_pkgs.append(pkg)
             elif pkg.get_status() == 'missing':
                 missing_pkgs.append(pkg)
 
@@ -95,6 +107,13 @@ def main():
     if args.show_outdated:
         print("\nOutdated packages:")
         for pkg in outdated_pkgs:
+            if args.show_installed and not pkg.is_installed():
+                # skip this package
+                continue
+            print(pkg)
+    if args.show_outofsync:
+        print("\nOut of sync packages:")
+        for pkg in outofsync_pkgs:
             if args.show_installed and not pkg.is_installed():
                 # skip this package
                 continue
