@@ -39,7 +39,8 @@ from helpers.package import Package
 def main():
     parser = argparse.ArgumentParser(
         description='A small package to get an overview of Archlinux ROS packages')
-    parser.add_argument('--distro_name', type=str, help='The ROS distribution that should be used',
+    parser.add_argument('--distro_name', type=str,
+                        help='The ROS distribution that should be used.  Defaults to "noetic"',
                         default='noetic')
     parser.add_argument('--hide_outdated', dest='show_outdated', action='store_false',
                         help='Hide packages that are outdated in AUR')
@@ -48,8 +49,8 @@ def main():
     parser.add_argument('--show_installed_only', dest='show_installed', action='store_true',
                         help='Show only outdated packages that are installed.')
     parser.add_argument('--hide_missing', dest='show_missing', action='store_true',
-            help='Hide packages that are missing in AUR',
-    default=True)
+                        help='Hide packages that are missing in AUR',
+                        default=True)
     parser.set_defaults(show_outdated=True)
     parser.set_defaults(show_outofsync=True)
     parser.set_defaults(show_installed=False)
