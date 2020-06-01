@@ -94,11 +94,11 @@ def main():
                 if gh_pkg:
                     pkg.add_gh_information(gh_pkg)
 
-            if pkg.get_status() == 'outdated':
+            if pkg.is_outdated():
                 outdated_pkgs.append(pkg)
-            if pkg.get_status() == 'outofsync':
+            if pkg.is_outofsync():
                 outofsync_pkgs.append(pkg)
-            elif pkg.get_status() == 'missing':
+            elif pkg.is_missing():
                 missing_pkgs.append(pkg)
 
         except TypeError as err:

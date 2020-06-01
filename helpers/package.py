@@ -84,29 +84,27 @@ class Package():
         """Add information from a parsed PKGBUILD from the GH repository"""
         self._gh_version = Version(pkg_info['version'])
 
-    def get_status(self):
-        """
-        Get up-to-date status. Either returns
-            * 'outdated' when the rosdistro version is different from the AUR version
-            * 'outofsync' when the rosdistro version is different from the AUR version and the GH
-            version is also different from AUR version
-            * 'uptodate' when rosdistro version and AUR version match
-            * 'missing' when no corresponding AUR package could be found
-            * 'error' if neither aur_version nor rosdistro_version are set for this package
-        """
-        # TODO: This might not be the best categorization
+    def is_outdated(self):
+        """Returns information whether this package is outdated inside AUR. If it doesn't have a
+        corresponding AUR package, False is returned."""
         if self._aur_version:
             if self._rosdistro_version != self._aur_version:
-                if self._gh_version:
-                    if self._aur_version != self._gh_version:
-                        return 'outofsync'
-                return 'outdated'
-            return 'uptodate'
-        elif self._rosdistro_version:
-            return 'missing'
+                return True
+        return False
 
-        # TODO throw
-        return 'error'
+    def is_outofsync(self):
+        """Returns information whether the AUR version differs from the on on Github. If either the
+        AUR version or the Github version is missing, False is returned."""
+        if self._aur_version and self._gh_version:
+            if self._gh_version != self._aur_version:
+                return True
+        return False
+
+    def is_missing(self):
+        """Returns True if no corresponding AUR package could be found."""
+        if self._aur_version:
+            return False
+        return True
 
     def is_installed(self):
         return self._installed
