@@ -28,6 +28,12 @@ import subprocess
 import sys
 
 
+class VersionParsingException(Exception):
+    def __init__(self, message):
+        self.message = message
+        super().__init__(self.message)
+
+
 class Version():
     """Version representation"""
 
@@ -45,8 +51,7 @@ class Version():
             self.minor = int(match.group('minor'))
             self.bugfix = int(match.group('bugfix'))
         else:
-            # TODO: Throw
-            print('Could not parse version %s' % (version_string), file=sys.stderr)
+            raise VersionParsingException('Could not parse version %s' % (version_string))
 
     def __eq__(self, other):
         return self.major == other.major \
@@ -73,16 +78,28 @@ class Package():
     def add_aur_information(self, aur_pkg):
         """Add information received from AUR to this package. This has to be a valid dictionary
         build from the AURweb json response."""
-        self._aur_version = Version(aur_pkg['Version'])
+        try:
+            self._aur_version = Version(aur_pkg['Version'])
+        except VersionParsingException as err:
+            print("Error parsing AUR version of package %s: %s" % (self.package_name, err.message),
+                  file=sys.stderr)
         self.update_installed_status(aur_pkg['Name'])
 
     def add_rosdistro_information(self, pkg_info):
         """Add information from a parsed package manifest"""
-        self._rosdistro_version = Version(pkg_info.version)
+        try:
+            self._rosdistro_version = Version(pkg_info.version)
+        except VersionParsingException as err:
+            print("Error parsing rosdistro version of package %s: %s" % (self.package_name, err.message),
+                  file=sys.stderr)
 
     def add_gh_information(self, pkg_info):
         """Add information from a parsed PKGBUILD from the GH repository"""
-        self._gh_version = Version(pkg_info['version'])
+        try:
+            self._gh_version = Version(pkg_info['version'])
+        except VersionParsingException as err:
+            print("Error parsing github version of package %s: %s" % (self.package_name, err.message),
+                  file=sys.stderr)
 
     def is_outdated(self):
         """Returns information whether this package is outdated inside AUR. If it doesn't have a
@@ -118,7 +135,11 @@ class Package():
         if process.returncode == 0:
             self._installed = True
             version_str = output[0].decode('utf-8').split()[1]
-            self._installed_version = Version(version_str)
+            try:
+                self._installed_version = Version(version_str)
+            except VersionParsingException as err:
+                print("Error parsing rosdistro version of package %s: %s" % (self.package_name, err.message),
+                      file=sys.stderr)
 
     def __str__(self):
         output = '%s:' % self.package_name
