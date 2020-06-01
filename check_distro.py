@@ -88,9 +88,11 @@ def main():
                 pkg.add_aur_information(aur_pkg)
                 # print('AUR version: %s' % aur_pkg['Version'])
 
-            gh_pkg = gh_adapter.get_package_info(aur_pkg_name)
-            if gh_pkg:
-                pkg.add_gh_information(gh_pkg)
+            # As querying this takes a lot of time enable it only if desired
+            if args.show_outofsync:
+                gh_pkg = gh_adapter.get_package_info(aur_pkg_name)
+                if gh_pkg:
+                    pkg.add_gh_information(gh_pkg)
 
             if pkg.get_status() == 'outdated':
                 outdated_pkgs.append(pkg)
