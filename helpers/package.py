@@ -68,6 +68,7 @@ class Package():
         self._aur_version = None
         self._gh_version = None
         self._installed = False
+        self._installed_version = None
 
     def add_aur_information(self, aur_pkg):
         """Add information received from AUR to this package. This has to be a valid dictionary
@@ -114,11 +115,12 @@ class Package():
         """Checks whether the package is installed locally"""
         cmd = ["pacman", "--noconfirm", "-Q", pkg_name]
         process = subprocess.Popen(cmd, stderr=subprocess.PIPE, stdout=subprocess.PIPE)
-        process.communicate()
+        output = process.communicate()
 
         if process.returncode == 0:
             self._installed = True
-
+            version_str = output[0].decode('utf-8').split()[1]
+            self._installed_version = Version(version_str)
 
     def __str__(self):
         output = '%s:' % self.package_name
@@ -127,5 +129,5 @@ class Package():
             output += '\n - AUR:       %s' % self._aur_version
         if self._gh_version:
             output += '\n - Github:    %s' % self._gh_version
-        output += '\nInstalled: %s' % self._installed
+        output += '\nInstalled:    %s' % self._installed_version
         return output
