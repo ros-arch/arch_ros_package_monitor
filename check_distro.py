@@ -47,11 +47,13 @@ def main():
                         help="Hide packages where the github version doesn't match the AUR version")
     parser.add_argument('--show_installed_only', dest='show_installed', action='store_true',
                         help='Show only outdated packages that are installed.')
-    # parser.add_argument('--show_missing', type=bool, help='Show packages that are missing in AUR',
-    # default=True)
+    parser.add_argument('--hide_missing', dest='show_missing', action='store_true',
+            help='Hide packages that are missing in AUR',
+    default=True)
     parser.set_defaults(show_outdated=True)
     parser.set_defaults(show_outofsync=True)
     parser.set_defaults(show_installed=False)
+    parser.set_defaults(show_missing=True)
 
     args = parser.parse_args()
 
@@ -104,6 +106,14 @@ def main():
             error_pkgs.append(pkg)
             print("Invalid package: %s\n%s" % (pkg_name, err), file=sys.stderr)
 
+    if args.show_missing:
+        print("\nMissing packages:")
+        for pkg in missing_pkgs:
+            if args.show_installed and not pkg.is_installed():
+                # skip this package
+                continue
+            print(pkg)
+
     if args.show_outdated:
         print("\nOutdated packages:")
         for pkg in outdated_pkgs:
@@ -111,6 +121,7 @@ def main():
                 # skip this package
                 continue
             print(pkg)
+
     if args.show_outofsync:
         print("\nOut of sync packages:")
         for pkg in outofsync_pkgs:
