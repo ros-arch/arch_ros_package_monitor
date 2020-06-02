@@ -35,6 +35,9 @@ from helpers.github import GHAdapter
 from helpers.rosdistro_adapter import RosdistroAdapter
 from helpers.package import Package
 
+def aur_pkg_name_from_name(pkg_name, distro_name):
+    return "ros-%s-%s" % (distro_name, pkg_name.replace('_', '-'))
+
 
 def main():
     parser = argparse.ArgumentParser(
@@ -80,7 +83,7 @@ def main():
         try:
             pkg_info = rosdistro.get_package_by_name(pkg_name)
             pkg.add_rosdistro_information(pkg_info)
-            aur_pkg_name = "ros-%s-%s" % (args.distro_name, pkg_name.replace('_', '-'))
+            aur_pkg_name = aur_pkg_name_from_name(pkg_name, args.distro_name)
             aur_pkg = aur_adapter.get_package_info(aur_pkg_name)
 
             # print('Upstream version: %s' % pkg_info.version)
