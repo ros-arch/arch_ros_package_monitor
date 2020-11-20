@@ -42,7 +42,7 @@ class GHAdapter():
         # print(pkgbuild_url)
         try:
             pkgbuild = urllib.request.urlopen(pkgbuild_url).read().decode('utf-8')
-            regex = r"pkgver='(?P<version>[^']+)'"
+            regex = r"pkgver\s*=\s*[\"']?(?P<version>[^\"']+)[\"']?"
             match = re.search(regex, pkgbuild)
             if match:
                 pkg['version'] = match.group('version')
