@@ -54,10 +54,13 @@ def main():
     parser.add_argument('--hide_missing', dest='show_missing', action='store_true',
                         help='Hide packages that are missing in AUR',
                         default=True)
+    parser.add_argument('--hide_ahead', dest='show_ahead', action='store_false',
+                        help='Hide packages that are ahead in AUR')
     parser.set_defaults(show_outdated=True)
     parser.set_defaults(show_outofsync=True)
     parser.set_defaults(show_installed=False)
     parser.set_defaults(show_missing=True)
+    parser.set_defaults(show_ahead=True)
 
     args = parser.parse_args()
 
@@ -73,6 +76,7 @@ def main():
     outofsync_pkgs = list()
     missing_pkgs = list()
     error_pkgs = list()
+    ahead_pkgs = list()
 
     for pkg_name in package_distribution_list:
         # if pkg_name == 'capabilities':
@@ -104,6 +108,8 @@ def main():
                 outofsync_pkgs.append(pkg)
             elif pkg.is_missing():
                 missing_pkgs.append(pkg)
+            if pkg.is_ahead():
+                ahead_pkgs.append(pkg)
 
         except TypeError as err:
             error_pkgs.append(pkg)
@@ -131,6 +137,14 @@ def main():
     if args.show_outofsync:
         print("\nOut of sync packages:")
         for pkg in outofsync_pkgs:
+            if args.show_installed and not pkg.is_installed():
+                # skip this package
+                continue
+            print(pkg)
+
+    if args.show_ahead:
+        print("\nAhead packages:")
+        for pkg in ahead_pkgs:
             if args.show_installed and not pkg.is_installed():
                 # skip this package
                 continue

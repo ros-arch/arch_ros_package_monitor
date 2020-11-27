@@ -58,6 +58,30 @@ class Version():
             and self.minor == other.minor \
             and self.bugfix == other.bugfix
 
+    def __gt__(self, other):
+        if self.major == other.major:
+            if self.minor == other.minor:
+                return self.bugfix > other.bugfix
+            else:
+                return self.minor > other.minor
+        else:
+            return self.major > other.major
+
+    def __lt__(self, other):
+        if self.major == other.major:
+            if self.minor == other.minor:
+                return self.bugfix < other.bugfix
+            else:
+                return self.minor < other.minor
+        else:
+            return self.major < other.major
+
+    def __ge__(self, other:)
+        return self == other or self > other
+
+    def __le__(self, other:)
+        return self == other or self < other
+
     def __str__(self):
         return '%i.%i.%i' % (self.major, self.minor, self.bugfix)
 
@@ -71,6 +95,7 @@ class Package():
 
         self._rosdistro_version = None
         self._aur_version = None
+        self._aur_maintainer = None
         self._gh_version = None
         self._installed = False
         self._installed_version = None
@@ -83,6 +108,7 @@ class Package():
         except VersionParsingException as err:
             print("Error parsing AUR version of package %s: %s" % (self.package_name, err.message),
                   file=sys.stderr)
+        self._aur_maintainer = aur_pkg['Maintainer']
         self.update_installed_status(aur_pkg['Name'])
 
     def add_rosdistro_information(self, pkg_info):
@@ -105,8 +131,12 @@ class Package():
         """Returns information whether this package is outdated inside AUR. If it doesn't have a
         corresponding AUR package, False is returned."""
         if self._aur_version:
-            if self._rosdistro_version != self._aur_version:
-                return True
+            return self._rosdistro_version > self._aur_version
+        return False
+
+    def is_ahead(self):
+        if self._aur_version:
+            return self._rosdistro_version < self._aur_version
         return False
 
     def is_outofsync(self):
@@ -145,7 +175,9 @@ class Package():
         output = '%s:' % self.package_name
         output += '\n - rosdistro: %s' % self._rosdistro_version
         if self._aur_version:
-            output += '\n - AUR:       %s' % self._aur_version
+            output += '\n - AUR:       %s (Maintainer: %s)' %(
+                    self._aur_version,
+                    self._aur_maintainer)
         if self._gh_version:
             output += '\n - Github:    %s' % self._gh_version
         output += '\nInstalled:    %s' % self._installed_version
