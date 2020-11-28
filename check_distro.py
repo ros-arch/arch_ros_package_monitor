@@ -51,7 +51,7 @@ def main():
                         help="Hide packages where the github version doesn't match the AUR version")
     parser.add_argument('--show_installed_only', dest='show_installed', action='store_true',
                         help='Show only outdated packages that are installed.')
-    parser.add_argument('--hide_missing', dest='show_missing', action='store_true',
+    parser.add_argument('--hide_missing', dest='show_missing', action='store_false',
                         help='Hide packages that are missing in AUR',
                         default=True)
     parser.add_argument('--hide_ahead', dest='show_ahead', action='store_false',
