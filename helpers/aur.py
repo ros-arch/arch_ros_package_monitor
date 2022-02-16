@@ -32,7 +32,7 @@ import urllib
 class AURAdapter():
     """Wrapper for AURWeb rpc"""
 
-    aur_api_url = "http://aur.archlinux.org/rpc.php"
+    aur_api_url = "https://aur.archlinux.org/rpc?v=5"
 
     def __init__(self, distro_name):
         self.distro_name = distro_name
@@ -42,7 +42,7 @@ class AURAdapter():
     def _get_packages(self):
         package_name = "ros-%s-" % self.distro_name
         params = urllib.parse.urlencode({'type': 'search', 'arg': package_name})
-        response = urllib.request.urlopen("%s?%s" % (self.aur_api_url, params)).read()
+        response = urllib.request.urlopen("%s&%s" % (self.aur_api_url, params)).read()
         parsed_response = json.loads(response)
         if parsed_response['resultcount'] > 0:
             return parsed_response['results']
